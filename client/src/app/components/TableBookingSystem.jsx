@@ -1,11 +1,11 @@
 "use client";
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Label } from "../../components/ui/label";
+import { Input } from "../../components/ui/Input";
+import { Button } from "../../components/ui/button";
+import { Calendar } from "../../components/ui/calendar";
 
 const TableBookingSystem = () => {
   const [bookingDetails, setBookingDetails] = useState({
