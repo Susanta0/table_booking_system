@@ -1,5 +1,5 @@
 
-import TableBookingSystem from "./component/TableBookingSystem";
+import TableBookingSystem from "@/app/component/TableBookingSystem";
 
 export default function Home() {
   return (
