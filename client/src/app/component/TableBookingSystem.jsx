@@ -25,6 +25,7 @@ const TableBookingSystem = () => {
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
 
 
@@ -33,15 +34,21 @@ const TableBookingSystem = () => {
     const fetchAvailableSlots = async () => {
       try {
         setError("");
+        setLoadingSlots(true);
         const formattedDate = bookingDetails.date.toISOString().split("T")[0];
         const response = await fetch(
           `${api}/available-slots?date=${formattedDate}`
         );
         const slots = await response.json();
         setAvailableTimeSlots(slots);
+
       } catch (error) {
         setError("Failed to fetch available time slots");
+        setAvailableTimeSlots([]);
       }
+    finally {
+      setLoadingSlots(false);
+    }
     };
 
     if (bookingDetails.date) {
@@ -78,6 +85,21 @@ const handleSubmit = async (e) => {
     setSuccess('');
 
     try {
+
+      const formattedDate = bookingDetails.date.toISOString().split("T")[0];
+      const availabilityCheck = await fetch(
+        `${api}/available-slots?date=${formattedDate}`
+      );
+      
+      if (!availabilityCheck.ok) {
+        throw new Error('Failed to verify slot availability');
+      }
+
+      const availableSlots = await availabilityCheck.json();
+      if (!availableSlots.includes(bookingDetails.time)) {
+        throw new Error('This time slot is no longer available. Please select another time.');
+      }
+
       const response = await fetch(`${api}/bookings`, {
         method: 'POST',
         headers: {
@@ -98,7 +120,18 @@ const handleSubmit = async (e) => {
       setBookingConfirmed(true);
       setSuccess('Your booking has been confirmed!');
     } catch (error) {
-      setError(error.message);
+     setError(error.message);
+      if (error.message.includes('no longer available')) {
+        // Refresh available slots
+        const formattedDate = bookingDetails.date.toISOString().split("T")[0];
+        const response = await fetch(
+          `${api}/available-slots?date=${formattedDate}`
+        );
+        if (response.ok) {
+          const slots = await response.json();
+          setAvailableTimeSlots(slots);
+        }
+      }
       window.scrollTo(0, 0);
     } finally {
       setLoading(false);
@@ -250,6 +283,9 @@ const canConfirmBooking = () => {
               </div>
             )}
 
+
+
+
             {step === 2 && (
               <div className="space-y-4">
                 <div>
@@ -266,6 +302,7 @@ const canConfirmBooking = () => {
                 <div>
                   <Label>Select Time</Label>
                   <div className="grid grid-cols-4 gap-2">
+                    
                     {availableTimeSlots.map((time) => (
                       <Button
                         key={time}
