@@ -8,7 +8,7 @@ bookingRoutes.post("/table/bookings", validateBooking, async (req, res) => {
   try {
     // Check for existing booking at the same date and time
     const existingBooking = await bookingModel.findOne({
-      date: new Date(req.body.date),
+      date: new Date(req.body.date).toISOString().split('T')[0],
       time: req.body.time,
     });
     if (existingBooking) {
