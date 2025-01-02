@@ -15,7 +15,7 @@ const validateBooking=(req, res, next)=>{
   
   // Basic phone validation (10 digits)
   const phoneRegex = /^\d{10}$/;
-  if (!phoneRegex.test(phone)) {
+  if (!phoneRegex.test(number)) {
     return res.status(400).json({ error: 'Invalid phone number format' });
   }
   
