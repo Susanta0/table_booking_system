@@ -6,17 +6,29 @@ const bookingRoutes = Router();
 
 bookingRoutes.post("/table/bookings", validateBooking, async (req, res) => {
   try {
-    // Check for existing booking at the same date and time
+    const { date, time } = req.body;
+
+    // Check if this time slot is already booked
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
     const existingBooking = await bookingModel.findOne({
-      date: new Date(req.body.date).toISOString().split('T')[0],
-      time: req.body.time,
+      date: {
+        $gte: startDate,
+        $lte: endDate
+      },
+      time: time
     });
+
     if (existingBooking) {
-      return res
-        .status(400)
-        .json({ error: "This time slot is already booked" });
+      return res.status(400).json({ 
+        error: 'This time slot is already booked. Please select another time.' 
+      });
     }
 
+    // If slot is available, create the booking
     const booking = new bookingModel(req.body);
     await booking.save();
     res.status(201).json(booking);
@@ -69,10 +81,6 @@ bookingRoutes.get("/table/available-slots", async (req, res) => {
       return res.status(400).json({ error: "Date parameter is required" });
     }
 
-    const bookings = await bookingModel.find({
-      date: new Date(date),
-    });
-
     const allTimeSlots = [
       "11:00 AM",
       "11:30 AM",
@@ -92,12 +100,28 @@ bookingRoutes.get("/table/available-slots", async (req, res) => {
       "8:30 PM",
     ];
 
-    const bookedSlots = bookings.map((booking) => booking.time);
-    const availableSlots = allTimeSlots.filter(
-      (slot) => !bookedSlots.includes(slot)
+     // Get bookings for the specified date
+     const startDate = new Date(date);
+     startDate.setHours(0, 0, 0, 0);
+     const endDate = new Date(date);
+     endDate.setHours(23, 59, 59, 999);
+ 
+     const existingBookings = await bookingModel.find({
+       date: {
+         $gte: startDate,
+         $lte: endDate
+       }
+     });
+
+       // Get all booked time slots for that date
+    const bookedTimeSlots = existingBookings.map(booking => booking.time);
+
+    // Filter out booked slots
+    const availableTimeSlots = allTimeSlots.filter(
+      slot => !bookedTimeSlots.includes(slot)
     );
 
-    res.json(availableSlots);
+    res.json(availableTimeSlots);
   } catch (error) {
     res.status(500).json({ error: "Error fetching available slots" });
   }
